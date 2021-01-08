@@ -1,0 +1,22 @@
+{
+  "name": "nmp-player",
+  "version": "1.0.0",
+  "description": "Play videos in minecraft using minecraft-protocol",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheAlan404/nmp-player.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/TheAlan404/nmp-player/issues"
+  },
+  "homepage": "https://github.com/TheAlan404/nmp-player#readme",
+  "dependencies": {
+    "prismarine-item": "^1.5.0"
+  }
+}
