@@ -17,6 +17,10 @@
   },
   "homepage": "https://github.com/TheAlan404/nmp-player#readme",
   "dependencies": {
-    "prismarine-item": "^1.5.0"
+    "cwise": "^1.0.10",
+    "get-pixels": "^3.3.2",
+    "prismarine-item": "^1.5.0",
+    "sharp": "^0.27.0",
+    "ytdl-core": "^4.4.1"
   }
 }

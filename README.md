@@ -1,13 +1,13 @@
 # nmp-player
 Node Minecraft Protocol Video Player
 
-# WARNING
-**This library is WIP!!**
-
 # Description
 This library allows you to display videos using the 'map' item in minecraft.
 Currently supports:
 - Video JSON's [*link*](#videoJSON)
+
+# Contributing
+Feel free to open an issue or a pull request! :D
 
 API
 ===
@@ -15,6 +15,7 @@ API
 **NMP-Player**
 - VideoPlayer
 - Video
+- Converter
 
 # Class: VideoPlayer(server, [options]) extends EventEmitter
 A video player. Args:
@@ -75,19 +76,79 @@ Used internally. You should not generally initialize this class yourself. Either
 - data: Video Data (An array of hex-encoded buffer strings)
 - meta: Object containing metadata of the video.
 
-## video.FPS
+## Properties
+
+### video.FPS
 Number. The FPS of the video.
 
-## video.playing
+### video.playing
 Boolean representing if the video is currently playing or not.
 
-## video.data
+### video.data
 An array of buffers that represent the frames.
 
 
 
 ---
 
+
+# Class: Converter
+
+## Static Methods
+
+### Converter.extractFrames([options])
+Extracts frames using ffmpeg.
+- options: Object
+- options.filename: Path to the video or name of the video. Default: _"./video.mp4"_
+- options.ffmpegPath: Path to ffmpeg. Default: _"%FFMPEG_PATH%"_
+- options.path: Name of the folder that you want to extract the frames to. Default: _"frames"_
+Returns: Promise (resolves when ffmpeg finishes)
+
+### Converter.convertFrames([path], [delete])
+Converts frames from a folder. Use this after Converter.extractFrames()
+**Note:** This method does not _save_ the converted frames. Look for the output.
+- path: Folder of the frames. Default: _"frames"_
+- delete: Deletes the converted frame or not. Default: _true_
+Returns: Promise<Array<Buffer>>
+
+### Converter.convertToMap(buffer)
+Converts buffer to map data (resized to 128x128). I dont really know how to handle the output, check code?
+This method just does mapResize and toMap.
+- buffer: image
+Returns: Promise<ArrayBuffer>
+
+### Converter.toMap(buffer)
+Converts buffer to map data.
+**Warn:** Does not resize.
+- buffer: image (pixels)
+Returns: Promise<ArrayBuffer>
+
+### Converter.mapResize(buffer)
+Resizes the image. (128x128)
+- buffer: image (pixels)
+Returns: Promise<Buffer>
+
+
+
+
+---
+
+
+# Function: downloadYoutube(URL, [filename])
+Downloads a video.
+- URL: Video URL
+- filename: Name of the file to save to. Default: _"./video.mp4"_
+Returns: EventEmitter
+	- Events:
+	- "progress" (percentage)
+	- "finish" (filename)
+
+# Function: convertYoutube(URL)
+Downloads, extracts and converts the frames, then saves the video as _"video.json"_
+- URL: Video URL
+Returns: Promise<"video.json">
+
+---
 
 
 # Source
