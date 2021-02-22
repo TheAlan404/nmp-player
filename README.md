@@ -113,7 +113,7 @@ Returns: Promise<Array<Buffer>>
 
 ### Converter.convertToMap(buffer)
 Converts buffer to map data (resized to 128x128). I dont really know how to handle the output, check code?
-This method just does mapResize and toMap.
+This method just does resizeForMap and toMap.
 - buffer: image
 Returns: Promise<ArrayBuffer>
 
@@ -123,9 +123,11 @@ Converts buffer to map data.
 - buffer: image (pixels)
 Returns: Promise<ArrayBuffer>
 
-### Converter.mapResize(buffer)
+### Converter.resizeForMap(buffer[, width][, height])
 Resizes the image. (128x128)
 - buffer: image (pixels)
+- width: number (Default 128)
+- height: number (Default 128)
 Returns: Promise<Buffer>
 
 

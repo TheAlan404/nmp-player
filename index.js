@@ -195,7 +195,7 @@ class Converter {
 	
 	
 	static async convertToMap(data){
-		let resized = await Converter.mapResize(data);
+		let resized = await Converter.resizeForMap(data);
 		let mapped = await Converter.toMap(resized);
 		return mapped;
 	};
@@ -204,9 +204,10 @@ class Converter {
 		return await mapPixels.fromImage(buf, "image/png");
 	};
 	
-	static async mapResize(buf){
-		return await sharp(buf).resize({ width: 128,
-			height: 128,
+	static async resizeForMap(buf, w, h){
+		return await sharp(buf).resize({ 
+			width: w || 128,
+			height: h || 128,
 			options: {
 				fit: "cover",
 			}

@@ -1,6 +1,6 @@
 {
   "name": "nmp-player",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Play videos in minecraft using minecraft-protocol",
   "main": "index.js",
   "scripts": {
