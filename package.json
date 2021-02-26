@@ -1,6 +1,6 @@
 {
   "name": "nmp-player",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Play videos in minecraft using minecraft-protocol",
   "main": "index.js",
   "scripts": {
@@ -19,8 +19,15 @@
   "dependencies": {
     "cwise": "^1.0.10",
     "get-pixels": "^3.3.2",
+    "minecraft-data": "^2.77.0",
+    "nbs.js": "^1.0.1",
     "prismarine-item": "^1.5.0",
     "sharp": "^0.27.0",
     "ytdl-core": "^4.4.1"
+  },
+  "devDependencies": {
+    "minecraft-protocol": "^1.23.1",
+    "prismarine-chunk": "^1.22.0",
+    "vec3": "^0.1.7"
   }
 }

@@ -9,18 +9,41 @@ Currently supports:
 # Contributing
 Feel free to open an issue or a pull request! :D
 
+Install
+=======
+
+Available on npm
+```npm install nmp-player```
+
+
 API
-===
+====
 
 **NMP-Player**
 - VideoPlayer
 - Video
 - Converter
 
-# Class: VideoPlayer(server, [options]) extends EventEmitter
-A video player. Args:
+# Class: VideoPlayer([server], [options]) extends EventEmitter
+A video player. Extends EventEmitter. Args:
 - Server: minecraft-protocol server.
 - Options: Object
+- options.ID: number
+- options.frame: function, if given will call with buffer data to display frames
+
+## Example
+
+```js
+const { VideoPlayer } = require('nmp-player')
+
+<...>
+
+videoplayer = new VideoPlayer(server)
+
+videoplayer.play('./video.json')
+
+videoplayer.on('play', (video) => console.log() )
+```
 
 ## Properties
 
@@ -69,6 +92,75 @@ Fires every frame in a video.
 ---
 
 
+# Class: SongPlayer([server])
+A song player. Plays .nbs files, using [nbs.js](https://github.com/TheAlan404/nbs.js).
+Server is optional, but you should write your own \_note method. Extends EventEmitter.
+
+## Example
+
+```js
+const { SongPlayer } = require('nmp-player')
+
+<...>
+
+songplayer = new SongPlayer()
+
+songplayer._note = function(packet){
+	packet.x = 0
+	packet.y = 0
+	packet.z = 0
+	client.write('sound_effect', packet)
+}
+
+songplayer.play('./song.nbs')
+```
+
+## Properties
+
+### songplayer.song
+The loaded [Song](https://github.com/TheAlan404/nbs.js)
+
+### songplayer.tick
+The current tick
+
+### songplayer.interval
+The interval of the song player
+
+### songplayer.playing
+Boolean representing if a song is playing
+
+## Functions
+
+### songplayer.load(src)
+Try to load src, can be:
+- Song
+- String (filename)
+
+### songplayer.play([src])
+Plays song. src is same as load()
+
+### songplayer._note(packet)
+Handles notes, you must set this to your own function.
+- The packet name is 'sound_effect'
+- You must give x, y, z to the packet, calculate this by multiplying the players coordinate by 8.
+
+### songplayer.stop()
+Stops playing song
+
+## Events
+
+### "play" (song)
+Fires when a song starts playing.
+- song: [Song](https://github.com/TheAlan404/nbs.js)
+
+### "stop"
+Fires when the songplayer is manually stopped.
+
+### "end"
+Fires when song ends.
+
+---
+
 
 # Class: Video
 Used internally. You should not generally initialize this class yourself. Either way, constructor:
@@ -87,6 +179,9 @@ Boolean representing if the video is currently playing or not.
 ### video.data
 An array of buffers that represent the frames.
 
+### video.meta
+An object for video metadata.
+If the video is loaded from a file, it can contain 'filename'
 
 
 ---
@@ -158,3 +253,17 @@ Either
 - File path of a video json
 - A video json
 - An array of hex-encoded buffer strings
+
+---
+
+Update Logs
+-----------
+
+## 1.0.2
+
+- Added SongPlayer
+- Server is now optional for VideoPlayer
+- Added the ability to add custom frame display functions to VideoPlayer
+
+## 1.0.1
+- Changed Converter class function names to be more understandable

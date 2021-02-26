@@ -1,10 +1,14 @@
+const { EventEmitter, once } = require("events");
+const { exec } = require("child_process");
+const fs = require("fs");
+const Path = require("path");
+
 const Item = require('prismarine-item')("1.12.2");
 const YTDL = require("ytdl-core");
 const sharp = require('sharp');
 const mapPixels = require("./mapPixels.js");
-const { EventEmitter, once } = require("events");
-const { exec } = require("child_process");
-const fs = require("fs");
+const { loadSong, Song } = require("nbs.js");
+
 
 function parseBuffers(array){
 	if(array[0] === null) array.shift();
@@ -15,15 +19,16 @@ function parseBuffers(array){
 class VideoPlayer extends EventEmitter {
 	constructor(server, options={}){
 		super();
-		if(!server) throw new Error("No server specified!");
 		this.server = server;
 		this.options = options;
 		this.loaded = null;
 		this.ID = options.ID || 0;
+		if(options.frame) this._frame = options.frame;
 	};
 	giveMaps(options={}){
 		let item = Item.toNotch(new Item(358, 1));
 		item.itemDamage = this.ID;
+		if(!this.server) return;
 		for(let clientID in this.server.clients) {
 			let client = this.server.clients[clientID];
 			client.write("set_slot", {
@@ -55,11 +60,12 @@ class VideoPlayer extends EventEmitter {
 	_loadFile(path, resolve){
 		let buf = fs.readFileSync(path);
 		let data = JSON.parse(buf);
-		let meta = null;
+		let meta = {};
 		if(!Array.isArray(data)) {
 			meta = data.metadata;
 			data = data.frames || data.data || [];
 		};
+		meta.filename = Path.basename(path);
 		this.loaded = new Video(this, data, meta);
 		if(resolve) resolve(this.loaded);
 	};
@@ -77,6 +83,7 @@ class VideoPlayer extends EventEmitter {
 	};
 	
 	_frame(data){
+		if(!this.server) return;
 		let packet = {
 			itemDamage: this.ID,
 			scale: 4,
@@ -110,6 +117,77 @@ class VideoPlayer extends EventEmitter {
 	};
 };
 
+
+class SongPlayer extends EventEmitter {
+	constructor(server){
+		super();
+		this.interval = null;
+		this.tick = -1;
+		this.playing = false;
+		this.song = null;
+		this.server = server;
+	};
+	load(src){
+		let self = this;
+		return new Promise(function(resolve, reject){
+			if(typeof src == "string") {
+				self.song = loadSong(src);
+				resolve(self.song)
+			} else if(src instanceof Song) {
+				self.song = src;
+				resolve(self.song);
+			} else {
+				reject(new Error("Unknown song resource - must be an instance of Song (nbs.js) or a string/filename: "+src));
+			};
+		});
+	};
+	async play(src){
+		if(this.interval) clearInterval(this.interval);
+		await this.load(src);
+		this._play();
+	};
+	_play(){
+		if(this.interval) clearInterval(this.interval);
+		this.tick = -1;
+		if(!this.song) throw new Error("Song is not defined/loaded!");
+		this.interval = setInterval(this._tick, (20/this.song.tempo) * 50, this);
+		this.emit("play", this.song);
+	};
+	_tick(self){
+		self.tick += 1;
+		if(self.song.length < self.tick) {
+			self.stop(true);
+		};
+		for (let l in self.song.layers){
+			if(self.song.layers[l].notes[self.tick]) {
+				let packet = self.song.layers[l].notes[self.tick].packet;
+				//packet.x = clientPosition.x * 8;
+				//packet.y = clientPosition.y * 8;
+				//packet.z = clientPosition.z * 8;
+				packet.volume = self.song.layers[l].volume/100;
+				self._note(packet);
+			};
+		};
+	};
+	_note(packet){
+		if(!this.server) return;
+		for(let clientID in this.server.clients){
+			let client = this.server.clients[clientID];
+			client.write('sound_effect', packet);
+		};
+	};
+	stop(ended){
+		if(this.interval) clearInterval(this.interval);
+		this.tick = -1;
+		if(ended) {
+			this.emit("end");
+		} else {
+			this.emit("stop");
+		};
+	};
+};
+
+
 class Video {
 	/*
 	 * Used internally.
@@ -120,7 +198,11 @@ class Video {
 	constructor(videoplayer, data, meta={}){
 		this.VideoPlayer = videoplayer;
 		this.data = parseBuffers(data || []);
+		
+		this.meta = meta;
 		this.FPS = meta.FPS || 10;
+		this.length = this.data.length / this.FPS;
+		
 		this.playing = false;
 		this._interval = null;
 		this._currentFrame = 0;
@@ -257,4 +339,5 @@ module.exports = {
 	downloadYoutube,
 	youtubeConvert,
 	mapPixels,
+	SongPlayer,
 };
