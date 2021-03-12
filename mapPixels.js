@@ -111,4 +111,5 @@ module.exports = {
 	hex,
 	color,
 	nearestMatch,
+	pixels,
 };

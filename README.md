@@ -16,6 +16,18 @@ Available on npm
 ```npm install nmp-player```
 
 
+TODO
+====
+
+These must be done, if you can do it and have free time your free to open a PR :3
+- Move play methods to VideoPlayer from Video, like SongPlayer
+- Add MediaPlayer which will be able to play both video and songs (maybe add in subtitles to the mix)
+- Propose a json/file structure for medias
+- Add streams for ffmpeg and youtube streams
+- Make a Builder class for better media converting
+
+
+
 API
 ====
 
@@ -226,7 +238,55 @@ Resizes the image. (128x128)
 Returns: Promise<Buffer>
 
 
+---
 
+
+# Class: PixelTransformer
+A Transform stream that converts given png chunks into minecraft map pixel data.
+You need to make the chunks complete pngs, you can do this using [stream-split](https://www.npmjs.com/package/stream-split)
+**Note:** This only converts PNG's to pixel data, it does not resize it into 128x128 dimensions
+
+## Event: videoShape (shape)
+Emits only once, gives you the dimensions of the video/frame/png's you have given
+shape is an array, **[x, y]**
+
+## Property: videoShape
+Same as the event but is set when the videoShape event is emitted
+
+
+**Example**
+
+```js
+	const { spawn } = require("child_process")
+	
+
+	let ffmpegProcess = spawn("C:\\ffmpeg\\bin\\ffmpeg.exe", ["-i", "pipe:0", "-r", fps, "-hide_banner", "-c:v", "png", "-f", "image2pipe", "-"])
+	videoFileStream.pipe(ffmpegProcess.stdin)
+	let splitter = new Split(Buffer.from(PNGHEAD, "hex"))
+	let frameDataStream = ffmpegProcess.stdout.pipe(splitter)
+	let pixelStream = new NMP.PixelTransformer()
+	frameDataStream.pipe(pixelStream)
+	
+	pixelStream.pipe(<...>)
+	// or
+	pixelStream.on("data", (data) => { <...> })
+```
+
+
+---
+
+
+# Object: mapPixels
+
+Contains
+- mapPixels.pixels,
+- mapPixels.COLORS,
+- mapPixels.fromImage,
+- mapPixels.hex,
+- mapPixels.color,
+- mapPixels.nearestMatch
+
+See [mapPixels.js](/mapPixels.js) for more info
 
 ---
 

@@ -2,6 +2,7 @@ const { EventEmitter, once } = require("events");
 const { exec } = require("child_process");
 const fs = require("fs");
 const Path = require("path");
+const stream = require("stream");
 
 const Item = require('prismarine-item')("1.12.2");
 const YTDL = require("ytdl-core");
@@ -24,6 +25,8 @@ class VideoPlayer extends EventEmitter {
 		this.loaded = null;
 		this.ID = options.ID || 0;
 		if(options.frame) this._frame = options.frame;
+		
+		this.interval = null;
 	};
 	giveMaps(options={}){
 		let item = Item.toNotch(new Item(358, 1));
@@ -81,7 +84,9 @@ class VideoPlayer extends EventEmitter {
 			});
 		});
 	};
-	
+	_play(){
+		
+	};
 	_frame(data){
 		if(!this.server) return;
 		let packet = {
@@ -327,8 +332,23 @@ async function youtubeConvert(url){
 	return "./video.json";
 };
 
+const PNGHEADER = "89504e470d0a1a0a";
 
-
+class PixelTransformer extends stream.Transform {
+	constructor(options){
+		super(options);
+	};
+	async _transform(chunk, _, next){
+		if(!chunk.toString("hex").startsWith(PNGHEADER)) chunk = Buffer.from(PNGHEADER + chunk.toString("hex"), "hex");
+		if(!this.videoShape) {
+			this.videoShape = (await mapPixels.pixels(chunk, "image/png")).shape;
+			this.emit("videoShape", this.videoShape);
+		};
+		let data = await Converter.toMap(chunk);
+		data = Buffer.from(data.buffer).toString("hex");
+		next(null, data);
+	};
+};
 
 
 module.exports = {
@@ -340,4 +360,5 @@ module.exports = {
 	youtubeConvert,
 	mapPixels,
 	SongPlayer,
+	PixelTransformer,
 };
