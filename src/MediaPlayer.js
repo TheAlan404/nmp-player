@@ -119,6 +119,25 @@ class MediaPlayer extends EventEmitter {
 	seek(frameCount = 0){
 		this.seekTo(this.frameIndex + frameCount);
 	};
+	rewind(amount = 0){
+		this.seek(-amount);
+	};
+	forward(amount = 0){
+		this.seek(amount);
+	};
+	
+	seekToSeconds(seconds = 0){
+		this.seekTo(this.frameRate * seconds);
+	};
+	seekSeconds(seconds = 0){
+		this.seek(this.frameRate * seconds);
+	};
+	rewindSeconds(seconds = 0){
+		this.rewind(this.frameRate * seconds);
+	};
+	forwardSeconds(seconds = 0){
+		this.forward(this.frameRate * seconds);
+	};
 	
 	addFrame(frame){
 		// literally push it. the interval code handles it
