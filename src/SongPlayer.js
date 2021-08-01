@@ -3,10 +3,10 @@ const MediaPlayer = require("./MediaPlayer");
 const States = MediaPlayer.States;
 
 class SongPlayer extends MediaPlayer {
-	constructor(){
+	constructor(cb, opts){
 		super();
 		this.song = null;
-		
+		this.onNote = cb ?? this.onNote;
 	};
 	load(src){
 		if(typeof src === "string") {

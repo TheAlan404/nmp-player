@@ -28,6 +28,8 @@ class MediaPlayer extends EventEmitter {
 		this.processFrame = this.processFrame || opts.processFrame || (() => {}); // fallback.
 		
 		this.isStream = opts.isStream ?? false;
+		this.askForFrames = opts.askForFrames ?? false;
+		
 		this._buffering = false;
 		this._ended = false;
 		this.state = States.Idle;

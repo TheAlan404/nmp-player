@@ -1,7 +1,7 @@
 {
   "name": "nmp-player",
   "version": "1.1.0",
-  "description": "Play videos in minecraft using minecraft-protocol",
+  "description": "Play videos and noteblock music in minecraft using minecraft-protocol",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -11,23 +11,18 @@
     "url": "git+https://github.com/TheAlan404/nmp-player.git"
   },
   "author": "",
-  "license": "MIT",
+  "license": "GNU",
   "bugs": {
     "url": "https://github.com/TheAlan404/nmp-player/issues"
   },
   "homepage": "https://github.com/TheAlan404/nmp-player#readme",
   "dependencies": {
     "cwise": "^1.0.10",
+    "ffmpeg-static": "^4.4.0",
     "get-pixels": "^3.3.2",
-    "minecraft-data": "^2.77.0",
     "nbs.js": "^1.0.1",
-    "prismarine-item": "^1.5.0",
-    "sharp": "^0.27.0",
+    "sharp": "^0.27.2",
+    "stream-split": "^1.1.0",
     "ytdl-core": "^4.4.1"
-  },
-  "devDependencies": {
-    "minecraft-protocol": "^1.23.1",
-    "prismarine-chunk": "^1.22.0",
-    "vec3": "^0.1.7"
   }
 }
