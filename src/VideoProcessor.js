@@ -1,5 +1,6 @@
 const { spawn } = require("child_process");
 const { EventEmitter, once } = require("events");
+const { convertColor } = require("./MapData");
 const sharp = require("sharp");
 const StreamSplitter = require("stream-split");
 
@@ -17,19 +18,18 @@ const States = {
 };
 
 class VideoProcessor extends EventEmitter {
-	constructor(player, src){
+	constructor(player){
 		super();
 		this.player = player;
 		this.state = States.Idle;
 		this.ffmpeg = null;
-		this.stream = src; // Input stream
 	};
-	async process(){
-		this.startFFMPEG();
+	async process(src){
+		this.startFFMPEG(src);
 		await this.waitForFFMPEGEnd();
 	};
-	startFFMPEG(){
-		if(!this.src) throw new Error("Video Source Stream is not defined!");
+	startFFMPEG(src){
+		if(!src) throw new Error("Video Source Stream is not defined!");
 		this.state = States.Working;
 		this.ffmpeg = spawn(FFMPEG_PATH, [
 			"-i", "-",                         // input from stdin
@@ -42,7 +42,7 @@ class VideoProcessor extends EventEmitter {
 		]);
 		let splitter = new StreamSplitter(PNGHEADER);
 		splitter.on("data", (pngData) => this.handlePNG(Buffer.concat([PNGHEADER, pngData])))
-		this.src.pipe(this.ffmpeg.stdin);
+		src.pipe(this.ffmpeg.stdin);
 		this.ffmpeg.stdout.pipe(splitter);
 		
 		this.ffmpeg.on("close", (code, sig) => {
@@ -66,17 +66,18 @@ class VideoProcessor extends EventEmitter {
 		const numXSections = Math.ceil(info.width / 128);
 		const numYSections = Math.ceil(info.height / 128);
 
-		console.info('Frame', info);
-		console.info('Number of sections X (Width)', numXSections);
-		console.info('Number of sections Y (Height)', numZSections);
+		//console.info('Frame', info);
+		//console.info('Number of sections X (Width)', numXSections);
+		//console.info('Number of sections Y (Height)', numYSections);
 
 		let displays = {};
 
+		// thanks, @IceTank
 		for (let sX = 0; sX < numXSections; sX++) { // Width
 			for (let sY = 0; sY < numYSections; sY++) { // Height
 				
 				// for every section:
-				let chunk = new Uint8ClampedArray((128 * 128) * 3);
+				let chunk = [];
 				for (let dx = 0; dx < 128; dx++) { // X
 					for (let dz = 0; dz < 128; dz++) { // Z
 						let x = sX * 128 + dx;
@@ -86,13 +87,13 @@ class VideoProcessor extends EventEmitter {
 						};
 
 						let i = (x + (z * info.width)) * 3;
-						let r = buf[i];
-						let g = buf[i + 1];
-						let b = buf[i + 2];
+						let r = data[i];
+						let g = data[i + 1];
+						let b = data[i + 2];
 						chunk.push(convertColor(r, g, b));
 					};
 				};
-				displays[this.player?.displays.ids[sX + (sY * numXSections)]] = chunk;
+				displays[this.player?.displays.ids[sX + (sY * numXSections)]] = Buffer.from(chunk);
 				//
 			};
 		};
@@ -106,16 +107,15 @@ class VideoProcessor extends EventEmitter {
 			} catch(e){};
 			this.ffmpeg = null;
 		};
-		this.src = null;
 	};
 	static async process(player, src){
 		let startTime = Date.now();
-		let processor = new VideoProcessor(player, src);
+		let processor = new VideoProcessor(player);
 		let listener = (frame) => {
 			player.frames.push(frame);
 		};
 		processor.on("frame", listener);
-		await processor.process();
+		await processor.process(src);
 		processor.off("frame", listener);
 		processor.dispose();
 		return {

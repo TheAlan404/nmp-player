@@ -65,4 +65,4 @@ class SongPlayer extends MediaPlayer {
 	};
 };
 
-module.expors = SongPlayer;
+module.exports = SongPlayer;

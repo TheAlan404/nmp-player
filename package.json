@@ -20,9 +20,13 @@
     "cwise": "^1.0.10",
     "ffmpeg-static": "^4.4.0",
     "get-pixels": "^3.3.2",
+    "minecraft-protocol": "^1.25.0",
     "nbs.js": "^1.0.1",
+    "prismarine-item": "^1.10.0",
     "sharp": "^0.27.2",
     "stream-split": "^1.1.0",
-    "ytdl-core": "^4.4.1"
+    "string-commands": "github:thealan404/string-commands",
+    "uuid": "^3.4.0",
+    "ytdl-core": "^4.9.0"
   }
 }

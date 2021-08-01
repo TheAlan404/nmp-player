@@ -12,7 +12,7 @@ let { promisify } = require('util');
 let cwise = require('cwise');
 
 const pixels = promisify(getPixels)
-const COLORS = require("./colors.json");
+const COLORS = require("./COLORS.json");
 const toHex = (r, g, b) => ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff)
 
 const nearest = (r1, g1, b1) => {
@@ -50,7 +50,7 @@ const matcher = () => {
 	}
 }
 
-const nearestMatch = matcher()
+const convertColor = matcher()
 
 /**
  *
@@ -79,7 +79,7 @@ function hex(id) {
  * @param {String} path the image path (can be an url)
  * @returns an object containing an unsigned byte array of id
  */
-async function fromImage(...a) {
+async function fromImage(...a) { // /!\ WARNING: LEGACY CODE /!\.
 	const img = await pixels(...a);
 	const [width, height] = img.shape
 	const mapIds = cwise({
@@ -98,7 +98,7 @@ async function fromImage(...a) {
 			return this.result
 		},
 	})
-	return mapIds(width, height, img, nearestMatch);
+	return mapIds(width, height, img, convertColor);
 }
 
 
@@ -110,6 +110,6 @@ module.exports = {
 	fromImage,
 	hex,
 	color,
-	nearestMatch,
+	convertColor,
 	pixels,
 };
