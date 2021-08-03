@@ -8,10 +8,10 @@ class DisplayList {
 	constructor(width, height, ids) {
 		this.width = width ?? 1;
 		this.height = height ?? 1;
+		this.pixelWidth = this.width * 128;
+		this.pixelHeight = this.height * 128;
 		this.ids = Array.isArray(ids) ? ids : new Array(this.width * this.height);
-	};
-	get pixelCount() {
-		return (this.width * 128) * (this.height * 128);
+		this.pixelCount = (this.width * 128) * (this.height * 128);
 	};
 };
 

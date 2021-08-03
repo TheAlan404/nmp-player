@@ -9,10 +9,11 @@ const States = {
 };
 
 class VideoPlayer extends MediaPlayer {
-	constructor(displays, opts){
+	constructor(displays, opts = {}){
 		super(opts);
 		this.displays = displays ?? new DisplayList(1, 1, [1]);
-		this.stream = null;
+		this.processor = new VideoProcessor();
+		this.isStream = opts.isStream ?? true;
 	};
 	setDisplays(displays){
 		if(!displays) throw new Error("displays is not specified");
