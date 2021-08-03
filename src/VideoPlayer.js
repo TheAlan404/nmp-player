@@ -13,10 +13,10 @@ class VideoPlayer extends MediaPlayer {
 	constructor(displays, opts = {}){
 		super({
 			...opts,
-			cache: true, // save bandwidth and stuff
+			cache: false,//todo // save bandwidth and stuff
 		});
 		this.displays = displays ?? new DisplayList(1, 1, [1]);
-		this.processor = new VideoProcessor();
+		this.processor = new VideoProcessor(this);
 		this.processor.on("frame", (data) => this.frames.push(data));
 		this.isStream = opts.isStream ?? true;
 	};

@@ -99,6 +99,7 @@ class VideoProcessor extends EventEmitter {
 		let displays = this.player.displays;
 		let { process } = getConverter(this.type);
 		splitter.on("data", (pngData) => {
+			console.log("new png");
 			this.emit("frame", process(Buffer.concat([PNGHEADER, pngData]), displays));
 		});
 	};
