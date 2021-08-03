@@ -126,6 +126,8 @@ server.on("login", (client) => {
 	});
 	
 	client.chat(new Msg().text("Welcome to the test server").color("dark_aqua"));
+	
+	client.isReady = true;
 });
 
 const itemFrame = (x, y, z, id) => {
@@ -183,7 +185,7 @@ server.writeAll = (n, d) => {
 	let dontSendToNew = false;
 	if(!n == "map") dontSendToNew = true;
 	for (let i in server.clients) {
-		if(!server.clients[i].isReady && dontSendToNew) continue;
+		//if(!server.clients[i].isReady && dontSendToNew) continue;
 		server.clients[i].write(n, d);
 	};
 };

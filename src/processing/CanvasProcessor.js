@@ -39,7 +39,7 @@ function convert(ctx, displays){
 			let dataRGBA = ctx.getImageData(x * 128, y * 128, 128, 128).data;
 			let chunk = [];
 			let j = 0;
-			for (let k = 0; k < data_RGBA.length; k += 4) {
+			for (let k = 0; k < dataRGBA.length; k += 4) {
 				chunk.push(convertColor(dataRGBA[k], dataRGBA[k + 1], dataRGBA[k + 2]));
 			};
 			output[displays.ids[i]] = Buffer.from(chunk);

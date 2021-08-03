@@ -19,6 +19,7 @@ class VideoPlayer extends MediaPlayer {
 		this.processor = new VideoProcessor(this);
 		this.processor.on("frame", (data) => this.frames.push(data));
 		this.isStream = opts.isStream ?? true;
+		if(this.isStream) super.play();
 	};
 	setDisplays(displays){
 		if(!displays) throw new Error("displays is not specified");
@@ -58,10 +59,9 @@ class VideoPlayer extends MediaPlayer {
 		};
 		
 		this.processor.start(this.source);
-		
-		super.play();
 	};
 	stop(...a){
+		this.frames = [];
 		this.processor.clear();
 		super.stop(...a);
 	};

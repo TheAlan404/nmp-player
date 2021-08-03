@@ -70,8 +70,8 @@ class VideoProcessor extends EventEmitter {
 		let { convert } = getConverter(this.type);
 		let displays = this.player.displays;
 		let ctx = this.canvas.getContext("2d");
-		this.interval = setInterval(() => {
-			this.emit("frame", convert(ctx, displays));
+		this.interval = setInterval(async () => {
+			this.emit("frame", await convert(ctx, displays));
 		}, this.player?.frameRate);
 	};
 	startFFMPEG(src){
@@ -84,7 +84,7 @@ class VideoProcessor extends EventEmitter {
 			"-c:v", "png",                     // export as pngs
 			"-r", this.player?.frameRate ?? 1, // fps
 			"-preset", "ultrafast",            // does this even help
-			"-hwaccel",                        // go nyoom if possible
+			//"-hwaccel",                        // go nyoom if possible
 			"-hide_banner",                    // aka no stdout info
 			"-f", "image2pipe",                // use mp4=>png conversion
 			"-"                                // stdout output
@@ -94,13 +94,13 @@ class VideoProcessor extends EventEmitter {
 		this.ffmpeg.stdout.pipe(splitter);
 		this.ffmpeg.on("close", (code, sig) => {
 			this.state = States.Idle;
+			this.ffmpeg = null;
 		});
 		this.ffmpeg.on("error", (e) => this.emit("ffmpegError", e));
 		let displays = this.player.displays;
 		let { process } = getConverter(this.type);
-		splitter.on("data", (pngData) => {
-			console.log("new png");
-			this.emit("frame", process(Buffer.concat([PNGHEADER, pngData]), displays));
+		splitter.on("data", async (pngData) => {
+			this.emit("frame", await process(Buffer.concat([PNGHEADER, pngData]), displays));
 		});
 	};
 	clear(){
