@@ -1,5 +1,6 @@
 const ytdl = require("ytdl-core");
 const fs = require("fs");
+const { Canvas } = require("canvas");
 const MediaPlayer = require("./MediaPlayer");
 const DisplayList = require("./DisplayList");
 const VideoProcessor = require("./VideoProcessor");
@@ -10,9 +11,13 @@ const States = {
 
 class VideoPlayer extends MediaPlayer {
 	constructor(displays, opts = {}){
-		super(opts);
+		super({
+			...opts,
+			cache: true, // save bandwidth and stuff
+		});
 		this.displays = displays ?? new DisplayList(1, 1, [1]);
 		this.processor = new VideoProcessor();
+		this.processor.on("frame", (data) => this.frames.push(data));
 		this.isStream = opts.isStream ?? true;
 	};
 	setDisplays(displays){
@@ -32,26 +37,33 @@ class VideoPlayer extends MediaPlayer {
 			})();
 			
 			if(isYT) {
-				this.stream = ytdl(src);
+				this.source = ytdl(src);
 				return;
 			} else {
 				if(fs.existsSync(src)) return fs.createReadStream(src);
 				throw new Error("Unsupported source:", src);
 			};
-		} else if(src && src.on) {
-			this.stream = src; // very good idea to check if it is a stream like this. -den
 		} else {
-			throw new Error("Unsupported source:", src);
-		};
+			this.source = src;
+		}
 	};
 	async play(src){
 		if(src) await this.load(src);
-		if(!this.stream) throw new Error("No video specified!");
+		if(!this.source) throw new Error("No video specified!");
 		
-		let meta = await VideoProcessor.process(this, this.stream);
-		console.log("Processing took", meta.timeTaken, "ms!");
+		if(this.source instanceof Canvas || this.source.getContext) {
+			this.processor.setMode("canvas");
+		} else {
+			this.processor.setMode("video");
+		};
+		
+		this.processor.start(this.source);
 		
 		super.play();
+	};
+	stop(...a){
+		this.processor.clear();
+		super.stop(...a);
 	};
 	processFrame(frame){
 		// implement it yourself smh

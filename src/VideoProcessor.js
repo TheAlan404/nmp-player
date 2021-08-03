@@ -14,112 +14,107 @@ try {
 const States = {
 	Idle: "idle",
 	Working: "working",
-	Finished: "finished",
+};
+
+const Modes = {
+	None: "none",
+	Canvas: "canvas",
+	Video: "video",
+};
+
+function getConverter(type = "canvas"){
+	switch(type) {
+		case "canvas":
+			return require("./processing/CanvasProcessor");
+			break;
+		case "sharp":
+			return require("./processing/SharpProcessor");
+			break;
+		default:
+			throw new Error("Unsupported processor type: "+type);
+	};
 };
 
 class VideoProcessor extends EventEmitter {
-	constructor(player){
+	constructor(player, opts = {}){
 		super();
 		this.player = player;
 		this.state = States.Idle;
+		this.type = opts.type ?? "canvas";
 		this.ffmpeg = null;
+		this.canvas = null;
+		this.mode = Modes.None;
 	};
-	async process(src){
-		this.startFFMPEG(src);
-		await this.waitForFFMPEGEnd();
+	setMode(mode){
+		this.mode = mode;
+	};
+	start(data){
+		switch(this.mode){
+			case Modes.None:
+				return;
+			case Modes.Video:
+				this.startFFMPEG(data);
+				break;
+			case Modes.Canvas:
+				this.startCanvas(data);
+				break;
+		};
+	};
+	startCanvas(canvas){
+		if(canvas) this.canvas = canvas;
+		if(!this.canvas) throw new Error("Canvas is not present");
+		if(this.mode !== Modes.Canvas) throw new Error("Must be in canvas mode");
+		if(this.interval || this.state === States.Working) throw new Error("Already started");
+		
+		this.state = States.Working;
+		let { convert } = getConverter(this.type);
+		let displays = this.player.displays;
+		let ctx = this.canvas.getContext("2d");
+		this.interval = setInterval(() => {
+			this.emit("frame", convert(ctx, displays));
+		}, this.player?.frameRate);
 	};
 	startFFMPEG(src){
 		if(!src) throw new Error("Video Source Stream is not defined!");
+		if(this.mode !== Modes.Video) throw new Error("FFMPEG can only be used in video mode!");
+		if(this.ffmpeg || this.state === States.Working) throw new Error("Another video is already being processed! Call clear() to kill ffmpeg");
 		this.state = States.Working;
 		this.ffmpeg = spawn(FFMPEG_PATH, [
 			"-i", "-",                         // input from stdin
 			"-c:v", "png",                     // export as pngs
 			"-r", this.player?.frameRate ?? 1, // fps
 			"-preset", "ultrafast",            // does this even help
+			"-hwaccel",                        // go nyoom if possible
 			"-hide_banner",                    // aka no stdout info
 			"-f", "image2pipe",                // use mp4=>png conversion
 			"-"                                // stdout output
 		]);
 		let splitter = new StreamSplitter(PNGHEADER);
-		splitter.on("data", (pngData) => this.handlePNG(Buffer.concat([PNGHEADER, pngData])))
 		src.pipe(this.ffmpeg.stdin);
 		this.ffmpeg.stdout.pipe(splitter);
-		
 		this.ffmpeg.on("close", (code, sig) => {
-			this.state = States.Finished;
+			this.state = States.Idle;
 		});
 		this.ffmpeg.on("error", (e) => this.emit("ffmpegError", e));
+		let displays = this.player.displays;
+		let { process } = getConverter(this.type);
+		splitter.on("data", (pngData) => {
+			this.emit("frame", process(Buffer.concat([PNGHEADER, pngData]), displays));
+		});
 	};
-	async waitForFFMPEGEnd(){
-		return await once(this.ffmpeg, "close");
-	};
-	async handlePNG(pngData){
-		const { data, info } = await sharp(pngData)
-			.resize({
-				width: 128 * this.player?.displays?.width,
-				height: 128 * this.player?.displays?.height,
-				fit: 'contain'
-			})
-			.removeAlpha()
-			.raw()
-			.toBuffer({ resolveWithObject: true });
-		const numXSections = Math.ceil(info.width / 128);
-		const numYSections = Math.ceil(info.height / 128);
-
-		//console.info('Frame', info);
-		//console.info('Number of sections X (Width)', numXSections);
-		//console.info('Number of sections Y (Height)', numYSections);
-
-		let displays = {};
-
-		// thanks, @IceTank
-		for (let sX = 0; sX < numXSections; sX++) { // Width
-			for (let sY = 0; sY < numYSections; sY++) { // Height
-				
-				// for every section:
-				let chunk = [];
-				for (let dx = 0; dx < 128; dx++) { // X
-					for (let dz = 0; dz < 128; dz++) { // Z
-						let x = sX * 128 + dx;
-						let z = sY * 128 + dz;
-						if (x > info.width || z > info.height) {
-							continue;
-						};
-
-						let i = (x + (z * info.width)) * 3;
-						let r = data[i];
-						let g = data[i + 1];
-						let b = data[i + 2];
-						chunk.push(convertColor(r, g, b));
-					};
-				};
-				displays[this.player?.displays.ids[sX + (sY * numXSections)]] = Buffer.from(chunk);
-				//
-			};
-		};
-		
-		this.emit("frame", displays);
-	};
-	dispose(){
+	clear(){
 		if(this.ffmpeg) {
 			try {
 				this.ffmpeg.kill();
 			} catch(e){};
 			this.ffmpeg = null;
 		};
-	};
-	static async process(player, src){
-		let startTime = Date.now();
-		let processor = new VideoProcessor(player);
-		let listener = (frame) => {
-			player.frames.push(frame);
+		if(this.interval) {
+			clearInterval(this.interval);
+			this.interval = null;
 		};
-		processor.on("frame", listener);
-		await processor.process(src);
-		processor.off("frame", listener);
-		processor.dispose();
-		return {
-			timeTaken: Date.now() - startTime,
+		if(this.canvas) {
+			this.canvas = null;
 		};
 	};
 };

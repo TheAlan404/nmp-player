@@ -20,7 +20,7 @@ async function resize(pngData, displays){
 		newWidth = newHeight * wrh;
 	}
 	ctx.drawImage(img, 0, 0, newWidth, newHeight);
-return { canvas, ctx };
+	return { canvas, ctx };
 };
 
 /**

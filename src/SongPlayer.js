@@ -4,7 +4,7 @@ const States = MediaPlayer.States;
 
 class SongPlayer extends MediaPlayer {
 	constructor(cb, opts){
-		super();
+		super({ cache: false }); // we want to repeat notes when they come one after another
 		this.song = null;
 		this.onNote = cb ?? this.onNote;
 	};

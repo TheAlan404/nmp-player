@@ -30,6 +30,7 @@ class MediaPlayer extends EventEmitter {
 		this.isStream = opts.isStream ?? false;
 		this.askForFrames = opts.askForFrames ?? false;
 		
+		this.caching = opts.cache ?? true;
 		this._buffering = false;
 		this._ended = false;
 		this.state = States.Idle;
@@ -178,7 +179,10 @@ class MediaPlayer extends EventEmitter {
 				this.emit("bufferingEnd");
 				this.state = States.Play;
 			};
-			this.processFrame(data);
+			if(!this.caching || this._cache !== data) {
+				this.processFrame(data);
+				if(this.caching) this._cache = data;
+			};
 			if(this.isStream) {
 				this.frames.shift();
 			} else {
