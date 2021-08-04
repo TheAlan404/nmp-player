@@ -36,9 +36,10 @@ function getConverter(type = "canvas"){
 };
 
 class VideoProcessor extends EventEmitter {
-	constructor(player, opts = {}){
+	constructor(displays, opts = {}){
 		super();
-		this.player = player;
+		this.displays = displays;
+		this.frameRate = opts.frameRate;
 		this.state = States.Idle;
 		this.type = opts.type ?? "canvas";
 		this.ffmpeg = null;
@@ -68,11 +69,11 @@ class VideoProcessor extends EventEmitter {
 		
 		this.state = States.Working;
 		let { convert } = getConverter(this.type);
-		let displays = this.player.displays;
+		let displays = this.displays;
 		let ctx = this.canvas.getContext("2d");
 		this.interval = setInterval(async () => {
 			this.emit("frame", await convert(ctx, displays));
-		}, this.player?.frameRate);
+		}, this.frameRate);
 	};
 	startFFMPEG(src){
 		if(!src) throw new Error("Video Source Stream is not defined!");
@@ -82,7 +83,7 @@ class VideoProcessor extends EventEmitter {
 		this.ffmpeg = spawn(FFMPEG_PATH, [
 			"-i", "-",                         // input from stdin
 			"-c:v", "png",                     // export as pngs
-			"-r", this.player?.frameRate ?? 1, // fps
+			"-r", this.frameRate ?? 1, // fps
 			"-preset", "ultrafast",            // does this even help
 			//"-hwaccel",                        // go nyoom if possible
 			"-hide_banner",                    // aka no stdout info
@@ -97,7 +98,7 @@ class VideoProcessor extends EventEmitter {
 			this.ffmpeg = null;
 		});
 		this.ffmpeg.on("error", (e) => this.emit("ffmpegError", e));
-		let displays = this.player.displays;
+		let displays = this.displays;
 		let { process } = getConverter(this.type);
 		splitter.on("data", async (pngData) => {
 			this.emit("frame", await process(Buffer.concat([PNGHEADER, pngData]), displays));
